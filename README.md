@@ -1,5 +1,5 @@
 # orders
 
-Project using postgresql database, NanoHttp server, REST communication with json format.
+Project using maven, postgresql database, NanoHttp server, REST communication with json format.
 CI: Travis
 unit tests: JUnit5
