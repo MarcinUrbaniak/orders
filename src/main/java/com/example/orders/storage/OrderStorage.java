@@ -1,6 +1,7 @@
 package com.example.orders.storage;
 
 import com.example.orders.type.Order;
+import com.example.orders.type.OrderItem;
 
 import java.util.List;
 
@@ -10,6 +11,6 @@ public interface OrderStorage {
 
     List<Order> getAllOrders();
 
-    void addOrder(Order order);
+    void addOrder(Order order, OrderItem orderItem);
 
 }
