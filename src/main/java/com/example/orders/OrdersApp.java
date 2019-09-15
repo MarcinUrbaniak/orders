@@ -6,6 +6,7 @@ import java.io.IOException;
 
 public class OrdersApp extends NanoHTTPD {
 
+    RequestUrlMapper requestUrlMapper = new RequestUrlMapper();
 
     public OrdersApp(int port) throws IOException {
         super(port);
@@ -23,7 +24,7 @@ public class OrdersApp extends NanoHTTPD {
 
     @Override
     public NanoHTTPD.Response serve(NanoHTTPD.IHTTPSession session){
-        return null;
+        return requestUrlMapper.delegateRequest(session);
     }
 
 }
