@@ -20,6 +20,12 @@ public class OrdersApp extends NanoHTTPD {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public NanoHTTPD.Response serve(NanoHTTPD.IHTTPSession session){
+        return null;
+    }
+
 }
 
 
