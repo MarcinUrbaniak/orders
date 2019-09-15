@@ -76,35 +76,6 @@ public class OrderStorageImpl implements OrderStorage {
         return orders;
     }
 
-    public static void main(String[] args) {
-        Order order = new Order();
-        List<OrderItem> orderItems = new ArrayList<>();
-
-        OrderItem orderItem1 = new OrderItem();
-        OrderItem orderItem2 = new OrderItem();
-
-        OrderStorageImpl orderStorage = new OrderStorageImpl();
-        order.setOrderDate(Date.valueOf("2019-08-05"));
-        order.setCustomer_id(2);
-
-        orderItem1.setAmmmount(BigDecimal.valueOf(300));
-        orderItem1.setBook_id(1);
-        orderItem2.setAmmmount(BigDecimal.valueOf(500));
-        orderItem2.setBook_id(2);
-        Collections.addAll(orderItems, orderItem1, orderItem2);
-
-        orderStorage.addOrderAndItems(order, orderItems);
-        List<Order> orders =  orderStorage.getAllOrders();
-
-        for (Order order1: orders
-             ) {
-            System.out.println("order1 = " + order1);
-        }
-
-        Order order11 = orderStorage.getOrder(2);
-        System.out.println("\n order1222 = " + order11);
-    }
-
     @Override
     public void addOrderAndItems(Order order, List<OrderItem> orderItems) {
 
