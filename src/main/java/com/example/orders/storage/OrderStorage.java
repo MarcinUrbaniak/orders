@@ -11,6 +11,8 @@ public interface OrderStorage {
 
     List<Order> getAllOrders();
 
-    void addOrder(Order order, List<OrderItem> orderItems);
+    void addOrderAndItems(Order order, List<OrderItem> orderItems);
+
+
 
 }
