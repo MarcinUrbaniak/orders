@@ -1,0 +1,6 @@
+[
+  "customer_id": 4,
+  "orderDate" "2019-01-08",
+  {"book_id": 1, "order_id": 2, "ammount": 450},
+  {"book_id": 1, "order_id": 2, "ammount": 550}
+]

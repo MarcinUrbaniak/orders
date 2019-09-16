@@ -1,6 +1,7 @@
 package com.example.orders.storage.impl;
 
 import com.example.orders.storage.OrderStorage;
+import com.example.orders.type.Customer;
 import com.example.orders.type.Order;
 import com.example.orders.type.OrderItem;
 import com.sun.tools.corba.se.idl.constExpr.Or;
@@ -49,7 +50,7 @@ public class OrderStorageImpl implements OrderStorage {
     }
 
     @Override
-    public List<Order> getAllOrders() {
+    public  List<Order> getAllOrders() {
 
         List<Order> orders = new ArrayList<>();
         Connection connection = getConnection();
@@ -100,7 +101,7 @@ public class OrderStorageImpl implements OrderStorage {
                  ) {
                 preparedStatementOrderItem.setInt(1, orderItem.getBook_id());
                 preparedStatementOrderItem.setInt(2, resultSet.getInt(1));
-                preparedStatementOrderItem.setBigDecimal(3, orderItem.getAmmmount());
+                preparedStatementOrderItem.setBigDecimal(3, orderItem.getAmmount());
                 preparedStatementOrderItem.execute();
             }
 
