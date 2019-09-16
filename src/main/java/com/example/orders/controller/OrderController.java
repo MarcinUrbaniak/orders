@@ -67,19 +67,17 @@ public class OrderController {
                 OrderItem orderItem = new OrderItem();
                 JsonNode jsonOrderItem = jsonNodeRoot.get(i);
                 orderItem.setBook_id(jsonOrderItem.get("book_id").asInt());
-                orderItem.setOrder_id(jsonOrderItem.get("order_id").asInt());
                 orderItem.setAmmount(jsonOrderItem.get("ammount").decimalValue());
 
                 orderItems.add(orderItem);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error during process request \n"+ e );
+            return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been adder");
         }
-        System.out.println("order = " + order);
-        for (OrderItem orderItem: orderItems
-             ) {
-            System.out.println("orderItem = " + orderItem);
-        }
-        return null;
+
+        orderStorage.addOrderAndItems(order, orderItems);
+
+        return newFixedLengthResponse(OK, "text/plain", "Order has been added");
     }
 }
