@@ -4,21 +4,21 @@ import com.example.orders.storage.OrderStorage;
 import com.example.orders.storage.impl.OrderStorageImpl;
 import com.example.orders.type.Order;
 import com.example.orders.type.OrderItem;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.sun.tools.corba.se.idl.constExpr.Or;
 import fi.iki.elonen.NanoHTTPD.*;
 
 
 import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static fi.iki.elonen.NanoHTTPD.*;
 import static fi.iki.elonen.NanoHTTPD.Response.Status.*;
@@ -26,10 +26,37 @@ import static fi.iki.elonen.NanoHTTPD.Response.Status.*;
 public class OrderController {
 
     private OrderStorage orderStorage = new OrderStorageImpl();
+    public static final String ORDER_ID_PARAM_NAME ="book_id";
 
     public Response serveGetOrderRequest(IHTTPSession session){
+        Map<String, List<String>> requestParameters = session.getParameters();
 
-        return null;
+        if(requestParameters.containsKey(ORDER_ID_PARAM_NAME)){
+            List<String> orderIdParams = requestParameters.get(ORDER_ID_PARAM_NAME);
+            String orderId = orderIdParams.get(0);
+            int orderIdInt = 0;
+
+            try {
+                orderIdInt = Integer.parseInt(orderId);
+            } catch (NumberFormatException nfe){
+                System.err.println("Error during convert  " + nfe);
+                return newFixedLengthResponse(BAD_REQUEST, "text/plain", "Order id hasn't been a number");
+            }
+            Order order = orderStorage.getOrder(orderIdInt);
+            if(order!=null){
+                ObjectMapper objectMapper = new ObjectMapper();
+                try {
+                    String response = objectMapper.writeValueAsString(order);
+                    return newFixedLengthResponse(OK, "application/json", response);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                    return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error, can't read all books");
+                }
+            }
+            return newFixedLengthResponse(NOT_FOUND, "text/plain", "Your order haven't been found");
+        }
+
+        return newFixedLengthResponse(BAD_REQUEST, "text/plain", "Uncorrect request params");
     }
 
     public Response serveGetOrdersRequest(IHTTPSession session){
@@ -76,6 +103,7 @@ public class OrderController {
             return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been adder");
         }
 
+        //TODO: obsuzyc sytuacje, w ktorych dostajemy dane, ktorych nie ma w bazie danych (metody statyczne)
         orderStorage.addOrderAndItems(order, orderItems);
 
         return newFixedLengthResponse(OK, "text/plain", "Order has been added");
