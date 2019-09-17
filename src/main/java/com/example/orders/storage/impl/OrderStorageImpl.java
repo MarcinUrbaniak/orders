@@ -111,7 +111,6 @@ public class OrderStorageImpl implements OrderStorage {
         }
     }
 
-
     @Override
     public boolean deleteOrder(int order_id) {
         Connection connection = getConnection();
