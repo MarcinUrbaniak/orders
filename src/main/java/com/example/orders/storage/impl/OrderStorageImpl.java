@@ -67,11 +67,8 @@ public class OrderStorageImpl implements OrderStorage {
         } finally {
             closeDataBaseConnection(connection, preparedStatement);
         }
-
         return orders;
     }
-
-
 
     @Override
     public void addOrderAndItems(Order order, List<OrderItem> orderItems) {
@@ -101,13 +98,11 @@ public class OrderStorageImpl implements OrderStorage {
                 preparedStatementOrderItem.execute();
             }
 
-
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             closeDataBaseConnection(connection, preparedStatementOrder);
             closeDataBaseConnection(connection, preparedStatementOrderItem);
-
         }
     }
 
@@ -135,6 +130,33 @@ public class OrderStorageImpl implements OrderStorage {
         }
         return true;
     }
+
+    @Override
+    public void changeOrderAndItems(Order order, List<OrderItem> orderItems){
+        Connection connection = getConnection();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = connection.prepareStatement("UPDATE orders SET order_date=?, customer_id=? WHERE order_id=?;");
+            preparedStatement.setDate(1,order.getOrderDate());
+            preparedStatement.setInt(2, order.getCustomer_id());
+            preparedStatement.setInt(3,order.getOrderId());
+            preparedStatement.execute();
+
+            preparedStatement = connection.prepareStatement("UPDATE order_items SET book_id = ?, ammount=? WHERE item_id = ?");
+
+            for (OrderItem orderItem: orderItems
+                 ) {
+                preparedStatement.setInt(1, orderItem.getBook_id());
+                preparedStatement.setBigDecimal(2, orderItem.getAmmount());
+                preparedStatement.setInt(3, orderItem.getItem_id());
+                preparedStatement.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeDataBaseConnection(connection, preparedStatement);
+        }
+    };
 
     private void closeDataBaseConnection(Connection connection, PreparedStatement preparedStatement) {
         try {
