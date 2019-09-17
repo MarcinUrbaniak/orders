@@ -8,17 +8,16 @@ import com.example.orders.type.OrderItem;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-import com.sun.tools.corba.se.idl.constExpr.Or;
 import fi.iki.elonen.NanoHTTPD.*;
-
 
 import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
 
 import static fi.iki.elonen.NanoHTTPD.*;
 import static fi.iki.elonen.NanoHTTPD.Response.Status.*;
@@ -26,7 +25,7 @@ import static fi.iki.elonen.NanoHTTPD.Response.Status.*;
 public class OrderController {
 
     private OrderStorage orderStorage = new OrderStorageImpl();
-    public static final String ORDER_ID_PARAM_NAME ="book_id";
+    public static final String ORDER_ID_PARAM_NAME ="order_id";
 
     public Response serveGetOrderRequest(IHTTPSession session){
         Map<String, List<String>> requestParameters = session.getParameters();
@@ -45,6 +44,8 @@ public class OrderController {
             Order order = orderStorage.getOrder(orderIdInt);
             if(order!=null){
                 ObjectMapper objectMapper = new ObjectMapper();
+                //disable serialization dates as timestamps
+                objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
                 try {
                     String response = objectMapper.writeValueAsString(order);
                     return newFixedLengthResponse(OK, "application/json", response);
@@ -61,6 +62,7 @@ public class OrderController {
 
     public Response serveGetOrdersRequest(IHTTPSession session){
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         String response = "";
         try {
             response = objectMapper.writeValueAsString(orderStorage.getAllOrders());
