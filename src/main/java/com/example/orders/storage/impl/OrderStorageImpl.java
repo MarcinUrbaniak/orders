@@ -1,17 +1,11 @@
 package com.example.orders.storage.impl;
 
 import com.example.orders.storage.OrderStorage;
-import com.example.orders.type.Customer;
 import com.example.orders.type.Order;
 import com.example.orders.type.OrderItem;
-import com.sun.tools.corba.se.idl.constExpr.Or;
 
-
-import javax.swing.plaf.nimbus.State;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class OrderStorageImpl implements OrderStorage {
@@ -26,7 +20,7 @@ public class OrderStorageImpl implements OrderStorage {
     @Override
     public Order getOrder(int order_id) {
         Connection connection = getConnection();
-        PreparedStatement preparedStatement = null;
+        PreparedStatement preparedStatement;
         Order order = new Order();
 
         try {
@@ -115,6 +109,32 @@ public class OrderStorageImpl implements OrderStorage {
             closeDataBaseConnection(connection, preparedStatementOrderItem);
 
         }
+    }
+
+
+    @Override
+    public boolean deleteOrder(int order_id) {
+        Connection connection = getConnection();
+        PreparedStatement preparedStatementDelete = null;
+        String delOrderItem = " DELETE FROM order_items WHERE order_id = ?;";
+        String delOrder = "DELETE FROM orders WHERE order_id = ?;";
+
+        try {
+            preparedStatementDelete = connection.prepareStatement( delOrderItem);
+            preparedStatementDelete.setInt(1,order_id);
+
+            preparedStatementDelete = connection.prepareStatement(delOrder);
+            preparedStatementDelete.setInt(1,order_id);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }finally {
+            closeDataBaseConnection(connection, preparedStatementDelete);
+        }
+
+
+        return true;
     }
 
     private void closeDataBaseConnection(Connection connection, PreparedStatement preparedStatement) {

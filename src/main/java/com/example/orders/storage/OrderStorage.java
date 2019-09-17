@@ -13,6 +13,8 @@ public interface OrderStorage {
 
     void addOrderAndItems(Order order, List<OrderItem> orderItems);
 
+    boolean deleteOrder(int order_id);
+
 
 
 }
