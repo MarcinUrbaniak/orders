@@ -5,12 +5,17 @@ import com.example.orders.storage.impl.OrderStorageImpl;
 import com.example.orders.type.Order;
 import com.example.orders.type.OrderItem;
 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+
 import fi.iki.elonen.NanoHTTPD.*;
+
+
 
 import java.io.IOException;
 import java.sql.Date;
@@ -72,6 +77,33 @@ public class OrderController {
             return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error can't read all orders");
         }
         return newFixedLengthResponse(OK,"application/json", response);
+    }
+
+    public Response serveChangeOrderRequest(IHTTPSession session){
+        ObjectMapper objectMapper = new ObjectMapper();
+        int contentLength = Integer.parseInt(session.getHeaders().get("content-length"));
+        byte[] buffer = new byte[contentLength];
+        Order order = new Order();
+        List<OrderItem> orderItems = new ArrayList<>();
+        try {
+            session.getInputStream().read(buffer,0,contentLength);
+            String requestBody = new String(buffer);
+            JsonNode jsonNodeTree = objectMapper.readTree(requestBody);
+            order = objectMapper.readValue(jsonNodeTree.get(0).toString(), Order.class);
+
+            for (int i = 1; i <jsonNodeTree.size() ; i++) {
+                OrderItem orderItem = objectMapper.readValue(jsonNodeTree.get(i).toString(),OrderItem.class);
+                orderItems.add(orderItem);
+            }
+            orderStorage.changeOrderAndItems(order,orderItems);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been changed");
+
+        }
+
+        return newFixedLengthResponse(OK, "text/plain", "Order has been changed");
     }
 
     public Response serveAddOrderRequest(IHTTPSession session){

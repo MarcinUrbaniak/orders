@@ -16,7 +16,6 @@ public class OrderStorageImpl implements OrderStorage {
     private static final String JDBC_USER = "postgres";
     private static final String JDBC_PASS = "postgres";
 
-
     @Override
     public Order getOrder(int order_id) {
         Connection connection = getConnection();

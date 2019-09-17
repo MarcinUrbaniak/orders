@@ -1,19 +1,20 @@
 [{
-  "order_id": 12
-},
-  {
+    "orderId": 12,
     "customer_id": 3,
     "orderDate": "2019-04-09"
   },
   {
+    "item_id": 1,
     "book_id": 1,
     "ammount": 450
   },
   {
+    "item_id": 2,
     "book_id": 2,
     "ammount": 550
   },
   {
+    "item_id": 3,
     "book_id": 3,
     "ammount": 550
   }
