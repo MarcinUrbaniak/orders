@@ -129,7 +129,6 @@ public class OrderController {
                 JsonNode jsonOrderItem = jsonNodeRoot.get(i);
                 orderItem.setBook_id(jsonOrderItem.get("book_id").asInt());
                 orderItem.setAmmount(jsonOrderItem.get("ammount").decimalValue());
-
                 orderItems.add(orderItem);
             }
         } catch (IOException e) {
