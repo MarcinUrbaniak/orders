@@ -121,9 +121,11 @@ public class OrderStorageImpl implements OrderStorage {
         try {
             preparedStatementDelete = connection.prepareStatement( delOrderItem);
             preparedStatementDelete.setInt(1,order_id);
+            preparedStatementDelete.execute();
 
             preparedStatementDelete = connection.prepareStatement(delOrder);
             preparedStatementDelete.setInt(1,order_id);
+            preparedStatementDelete.execute();
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -131,8 +133,6 @@ public class OrderStorageImpl implements OrderStorage {
         }finally {
             closeDataBaseConnection(connection, preparedStatementDelete);
         }
-
-
         return true;
     }
 

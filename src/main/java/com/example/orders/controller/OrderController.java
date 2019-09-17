@@ -105,9 +105,21 @@ public class OrderController {
             return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been adder");
         }
 
-        //TODO: obsuzyc sytuacje, w ktorych dostajemy dane, ktorych nie ma w bazie danych (metody statyczne)
+        //TODO: obsluzyc sytuacje, w ktorych dostajemy dane, ktorych nie ma w bazie danych (metody statyczne)
         orderStorage.addOrderAndItems(order, orderItems);
 
         return newFixedLengthResponse(OK, "text/plain", "Order has been added");
+    }
+
+    public Response serveDelOrderRequest(IHTTPSession session){
+
+        Map<String, List<String>> parameters = session.getParameters();
+        if(parameters.containsKey(ORDER_ID_PARAM_NAME)){
+            String orderIdStr = parameters.get(ORDER_ID_PARAM_NAME).get(0);
+            System.out.println("Integer.parseInt(orderIdStr) = " + Integer.parseInt(orderIdStr));
+            orderStorage.deleteOrder(Integer.parseInt(orderIdStr));
+            return newFixedLengthResponse(OK, "text/plain", "Order has been deleted");
+        };
+        return newFixedLengthResponse(BAD_REQUEST, "text/plain", "Uncorrect request params");
     }
 }
