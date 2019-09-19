@@ -27,6 +27,9 @@ public class OrdersApp extends NanoHTTPD {
         return requestUrlMapper.delegateRequest(session);
     }
 
+    public RequestUrlMapper getRequestUrlMapper() {
+        return requestUrlMapper;
+    }
 }
 
 

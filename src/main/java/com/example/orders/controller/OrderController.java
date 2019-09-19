@@ -151,4 +151,8 @@ public class OrderController {
         };
         return newFixedLengthResponse(BAD_REQUEST, "text/plain", "Uncorrect request params");
     }
+
+    public OrderStorageImpl getOrderStorage() {
+        return orderStorage;
+    }
 }

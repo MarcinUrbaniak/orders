@@ -28,7 +28,7 @@ public class OrderStorageImpl implements OrderStorage {
             preparedStatement.setInt(1, order_id);
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            if (resultSet.next()){
+            if (resultSet.next()) {
                 order.setOrderId(resultSet.getInt(1));
                 order.setOrderDate(resultSet.getDate(2));
                 order.setCustomer_id(resultSet.getInt(3));
@@ -44,7 +44,7 @@ public class OrderStorageImpl implements OrderStorage {
     }
 
     @Override
-    public  List<Order> getAllOrders() {
+    public List<Order> getAllOrders() {
 
         List<Order> orders = new ArrayList<>();
         Connection connection = getConnection();
@@ -54,7 +54,7 @@ public class OrderStorageImpl implements OrderStorage {
             preparedStatement = connection.prepareStatement("SELECT *FROM orders;");
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            while (resultSet.next()){
+            while (resultSet.next()) {
                 Order order = new Order();
                 order.setOrderId(resultSet.getInt(1));
                 order.setOrderDate(resultSet.getDate(2));
@@ -85,14 +85,14 @@ public class OrderStorageImpl implements OrderStorage {
                     " order_items (book_id, order_id, ammount) " +
                     "VALUES (?,?,?)");
 
-            preparedStatementOrder.setDate(1,order.getOrderDate());
+            preparedStatementOrder.setDate(1, order.getOrderDate());
             preparedStatementOrder.setInt(2, order.getCustomer_id());
             ResultSet resultSet = preparedStatementOrder.executeQuery();
             resultSet.next();
             order_id = resultSet.getInt(1);
 
-            for (OrderItem orderItem: orderItems
-                 ) {
+            for (OrderItem orderItem : orderItems
+            ) {
                 preparedStatementOrderItem.setInt(1, orderItem.getBook_id());
                 preparedStatementOrderItem.setInt(2, resultSet.getInt(1));
                 preparedStatementOrderItem.setBigDecimal(3, orderItem.getAmmount());
@@ -115,38 +115,38 @@ public class OrderStorageImpl implements OrderStorage {
         String delOrder = "DELETE FROM orders WHERE order_id = ?;";
 
         try {
-            preparedStatementDelete = connection.prepareStatement( delOrderItem);
-            preparedStatementDelete.setInt(1,order_id);
+            preparedStatementDelete = connection.prepareStatement(delOrderItem);
+            preparedStatementDelete.setInt(1, order_id);
             preparedStatementDelete.execute();
 
             preparedStatementDelete = connection.prepareStatement(delOrder);
-            preparedStatementDelete.setInt(1,order_id);
+            preparedStatementDelete.setInt(1, order_id);
             preparedStatementDelete.execute();
 
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
-        }finally {
+        } finally {
             closeDataBaseConnection(connection, preparedStatementDelete);
         }
         return true;
     }
 
     @Override
-    public void changeOrderAndItems(Order order, List<OrderItem> orderItems){
+    public void changeOrderAndItems(Order order, List<OrderItem> orderItems) {
         Connection connection = getConnection();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = connection.prepareStatement("UPDATE orders SET order_date=?, customer_id=? WHERE order_id=?;");
-            preparedStatement.setDate(1,order.getOrderDate());
+            preparedStatement.setDate(1, order.getOrderDate());
             preparedStatement.setInt(2, order.getCustomer_id());
-            preparedStatement.setInt(3,order.getOrderId());
+            preparedStatement.setInt(3, order.getOrderId());
             preparedStatement.execute();
 
             preparedStatement = connection.prepareStatement("UPDATE order_items SET book_id = ?, ammount=? WHERE item_id = ?");
 
-            for (OrderItem orderItem: orderItems
-                 ) {
+            for (OrderItem orderItem : orderItems
+            ) {
                 preparedStatement.setInt(1, orderItem.getBook_id());
                 preparedStatement.setBigDecimal(2, orderItem.getAmmount());
                 preparedStatement.setInt(3, orderItem.getItem_id());
@@ -157,20 +157,22 @@ public class OrderStorageImpl implements OrderStorage {
         } finally {
             closeDataBaseConnection(connection, preparedStatement);
         }
-    };
+    }
+
+    ;
 
     private void closeDataBaseConnection(Connection connection, PreparedStatement preparedStatement) {
         try {
-            if(preparedStatement != null) preparedStatement.close();
-            if(connection != null) connection.close();
+            if (preparedStatement != null) preparedStatement.close();
+            if (connection != null) connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private Connection getConnection()  {
+    private Connection getConnection() {
         try {
-            return DriverManager.getConnection(JDBC_URL,JDBC_USER, JDBC_PASS);
+            return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("System can't initialize database connection");
@@ -180,4 +182,19 @@ public class OrderStorageImpl implements OrderStorage {
     public int getOrder_id() {
         return order_id;
     }
+
+    public  void clearTablesOrderOrderItem() {
+        Connection connection = getConnection();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = connection.prepareStatement("DELETE FROM order_items;" +
+                    "DELETE FROM orders;");
+            preparedStatement.execute();
+
+        } catch (SQLException sql) {
+            sql.printStackTrace();
+        }
+        closeDataBaseConnection(connection, preparedStatement);
+    }
+
 }

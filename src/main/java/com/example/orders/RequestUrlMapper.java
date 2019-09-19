@@ -34,4 +34,8 @@ public class RequestUrlMapper {
         }
         return NanoHTTPD.newFixedLengthResponse(NOT_FOUND, "text/plain", "Not Found");
     }
+
+    public OrderController getOrderController() {
+        return orderController;
+    }
 }
