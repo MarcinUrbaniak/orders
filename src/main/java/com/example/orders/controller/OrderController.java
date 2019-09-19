@@ -5,23 +5,20 @@ import com.example.orders.storage.impl.OrderStorageImpl;
 import com.example.orders.type.Order;
 import com.example.orders.type.OrderItem;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-
+import com.sun.tools.corba.se.idl.constExpr.Or;
 import fi.iki.elonen.NanoHTTPD.*;
-
-
 
 import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 
 import static fi.iki.elonen.NanoHTTPD.*;
 import static fi.iki.elonen.NanoHTTPD.Response.Status.*;
@@ -107,8 +104,10 @@ public class OrderController {
 
     public Response serveAddOrderRequest(IHTTPSession session){
         ObjectMapper objectMapper = new ObjectMapper();
+        //enable unknown properties
+        //objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         List<OrderItem> orderItems = new ArrayList<>();
-        Order order = new Order();
+        Order order;
 
         String headers = session.getHeaders().get("content-length");
         int contentLength = Integer.parseInt(headers);
@@ -119,9 +118,11 @@ public class OrderController {
             String requestBody = new String(buffer);
             //create order
               JsonNode jsonNodeRoot = objectMapper.readTree(requestBody);
-              JsonNode jsonOrder = jsonNodeRoot.get(0);
-              order.setCustomer_id(jsonOrder.get("customer_id").asInt());
-              order.setOrderDate(Date.valueOf(jsonOrder.get("orderDate").asText()));
+
+              order = objectMapper.readValue(jsonNodeRoot.get(0).toString(), Order.class);
+              //alternative
+              //order.setCustomer_id(jsonOrder.get("customer_id").asInt());
+              //order.setOrderDate(Date.valueOf(jsonOrder.get("orderDate").asText()));
             //create orderItem list
             for (int i = 1; i < jsonNodeRoot.size(); i++) {
                 OrderItem orderItem = new OrderItem();
@@ -132,7 +133,7 @@ public class OrderController {
             }
         } catch (IOException e) {
             System.err.println("Error during process request \n"+ e );
-            return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been adder");
+            return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been added");
         }
 
         //TODO: obsluzyc sytuacje, w ktorych dostajemy dane, ktorych nie ma w bazie danych (metody statyczne)
