@@ -11,11 +11,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import com.sun.tools.corba.se.idl.constExpr.Or;
-import fi.iki.elonen.NanoHTTPD.*;
 
+import fi.iki.elonen.NanoHTTPD.*;
 import java.io.IOException;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,7 @@ import static fi.iki.elonen.NanoHTTPD.Response.Status.*;
 
 public class OrderController {
 
-    private OrderStorage orderStorage = new OrderStorageImpl();
+    private OrderStorageImpl orderStorage = new OrderStorageImpl();
     public static final String ORDER_ID_PARAM_NAME ="order_id";
 
     public Response serveGetOrderRequest(IHTTPSession session){
@@ -139,7 +137,7 @@ public class OrderController {
         //TODO: obsluzyc sytuacje, w ktorych dostajemy dane, ktorych nie ma w bazie danych (metody statyczne)
         orderStorage.addOrderAndItems(order, orderItems);
 
-        return newFixedLengthResponse(OK, "text/plain", "Order has been added");
+        return newFixedLengthResponse(OK, "text/plain", "Order has been added =" + orderStorage.getOrder_id());
     }
 
     public Response serveDelOrderRequest(IHTTPSession session){

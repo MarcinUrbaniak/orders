@@ -86,7 +86,7 @@ public class OrdersAppTest {
 
     @Disabled
     @Test
-    public void addMethodOrder_unexpectedField_ShouldReturnStatus500(){
+    public void addMethodOrder_unexpectedField_shouldReturnStatus500(){
         with()
                 .body("[{\n" +
                         "  \"name\": 2\n" +
@@ -96,4 +96,37 @@ public class OrdersAppTest {
                 .then().statusCode(500)
                 .body(equalTo("Internal error. Order hasn't been added"));
     }
+
+
+    private int addOrderAndGetId(String json){
+        String responseText = with()
+                .body(json)
+                .when().post("/order/add")
+                .then().statusCode(200).body(startsWith("Order has been added ="))
+                .extract().body().asString();
+        String id = responseText.substring(responseText.indexOf("=") + 1);
+        return Integer.parseInt(id);
+
+    }
+    @Disabled
+    @Test
+    public void getMetchod_correctID_shouldReturnStatus200(){
+        int orderId = addOrderAndGetId(ORDER_AND_ITEMS_1);
+
+        with().param("order_id", orderId)
+                .when().get("/order/get")
+                .then().statusCode(200)
+                .body("orderId", equalTo(orderId))
+                .body("customer_id", equalTo(3))
+                .body("orderDate", equalTo("2019-01-08"));
+    }
+
+    @Test
+    public void  getMethod_noOrderIdParameter_ShouldReturnStatus500(){
+        with().get("/order/get")
+                .then().statusCode(400)
+                .body(equalTo("Uncorrect request params"));
+    }
 }
+
+

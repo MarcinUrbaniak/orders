@@ -10,7 +10,8 @@ import java.util.List;
 
 public class OrderStorageImpl implements OrderStorage {
 
-    private static List<Order> orderList = new ArrayList<>();
+    //private static List<Order> orderList = new ArrayList<>();
+    private int order_id = 0;
 
     private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/book_store";
     private static final String JDBC_USER = "postgres";
@@ -88,6 +89,7 @@ public class OrderStorageImpl implements OrderStorage {
             preparedStatementOrder.setInt(2, order.getCustomer_id());
             ResultSet resultSet = preparedStatementOrder.executeQuery();
             resultSet.next();
+            order_id = resultSet.getInt(1);
 
             for (OrderItem orderItem: orderItems
                  ) {
@@ -173,5 +175,9 @@ public class OrderStorageImpl implements OrderStorage {
             e.printStackTrace();
             throw new RuntimeException("System can't initialize database connection");
         }
+    }
+
+    public int getOrder_id() {
+        return order_id;
     }
 }
