@@ -1,0 +1,17 @@
+[{
+  "customer_id": 3,
+  "orderDate": "2019-01-08"
+}, {
+  "book_id": 1,
+  "ammount": 450
+},
+  {
+    "book_id": 2,
+    "ammount": 550
+  },
+  {
+    "book_id": 3,
+    "ammount": 550
+  }
+]
+
