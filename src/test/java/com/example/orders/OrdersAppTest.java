@@ -12,6 +12,8 @@ import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 public class OrdersAppTest {
+
+
     private static final String ORDER_AND_ITEMS_1 = "[{\n" +
             "  \"customer_id\": 3,\n" +
             "  \"orderDate\": \"2019-01-08\"\n" +
@@ -46,8 +48,8 @@ public class OrdersAppTest {
             "  }\n" +
             "]\n";
     private static final String ORDER_AND_ITEMS_3 = "[{\n" +
-            "  \"customer_id\": 3,\n" +
-            "  \"orderDate\": \"2019-01-08\"\n" +
+            "  \"customer_id\": 2,\n" +
+            "  \"orderDate\": \"2019-05-08\"\n" +
             "}, {\n" +
             "  \"book_id\": 1,\n" +
             "  \"ammount\": 440 \n" +
@@ -65,6 +67,7 @@ public class OrdersAppTest {
 
     private static final int APP_PORT = 8090;
 
+
     private OrdersApp ordersApp;
 
 
@@ -81,20 +84,21 @@ public class OrdersAppTest {
 
     @AfterEach
     public void afterEach() {
+        deleteData();
         ordersApp.stop();
     }
 
-    @Disabled
+
     @Test
     public void addMethodOrder_correctBody_shouldReturnStatus200() {
         with()
                 .body(ORDER_AND_ITEMS_1)
                 .when().post("/order/add")
                 .then().statusCode(200)
-                .body(equalTo("Order has been added"));
+                .body(startsWith("Order has been added"));
     }
 
-    @Disabled
+
     @Test
     public void addMethodOrder_inCorrectBody_shouldReturnStatus500() {
         with()
@@ -104,7 +108,7 @@ public class OrdersAppTest {
                 .body(equalTo("Internal error. Order hasn't been added"));
     }
 
-    @Disabled
+
     @Test
     public void addMethodOrder_unexpectedField_shouldReturnStatus500() {
         with()
@@ -118,14 +122,26 @@ public class OrdersAppTest {
     }
 
 
-    private int addOrderAndGetId(String json) {
+
+    private int[] addOrderAndGetId(String json) {
         String responseText = with()
                 .body(json)
                 .when().post("/order/add")
                 .then().statusCode(200).body(startsWith("Order has been added ="))
                 .extract().body().asString();
-        String id = responseText.substring(responseText.indexOf("=") + 1);
-        return Integer.parseInt(id);
+
+        String id = responseText.substring(responseText.indexOf("=") + 1, responseText.indexOf("items") -1);
+        String item = responseText.substring(responseText.indexOf("[")+1, responseText.indexOf("]"));
+        String items[] = item.split(",");
+        int[] itemsInt = new int[items.length+1];
+        System.out.println("itemsInt.length = " + itemsInt.length);
+
+        for (int i = 0; i <items.length; i++) {
+            itemsInt[i] = Integer.parseInt(items[i].trim());
+        }
+        itemsInt[itemsInt.length-1] = Integer.parseInt(id);
+
+        return itemsInt;
 
     }
 
@@ -136,10 +152,11 @@ public class OrdersAppTest {
                 .clearTablesOrderOrderItem();
     }
 
-    @Disabled
+
     @Test
     public void getMetchod_correctID_shouldReturnStatus200() {
-        int orderId = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int[] orderIds = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int orderId = orderIds[orderIds.length-1];
 
         with().param("order_id", orderId)
                 .when().get("/order/get")
@@ -149,7 +166,7 @@ public class OrdersAppTest {
                 .body("orderDate", equalTo("2019-01-08"));
     }
 
-    @Disabled
+
     @Test
     public void getMethod_noOrderIdParameter_ShouldReturnStatus500() {
         with().get("/order/get")
@@ -157,7 +174,7 @@ public class OrdersAppTest {
                 .body(equalTo("Uncorrect request params"));
     }
 
-    @Disabled
+
     @Test
     public void getMethod_OrderIdAsText_shouldReturnStatus400() {
         with().param("order_id", "abc")
@@ -166,7 +183,7 @@ public class OrdersAppTest {
                 .body(equalTo("Order id hasn't been a number"));
     }
 
-    @Disabled
+
     @Test
     public void getMethod_orderDoesNotExist_shouldReturStatus404() {
         with().param("order_id", 999999)
@@ -175,10 +192,10 @@ public class OrdersAppTest {
                 .body(equalTo(""));
     }
 
-    @Disabled
+
     @Test
     public void getAllMethod_0Order_shouldReturn200() {
-        deleteData();
+
         when().get("/order/getAll")
                 .then().statusCode(200)
                 .body("", hasSize(0));
@@ -186,8 +203,10 @@ public class OrdersAppTest {
 
     @Test
     public void getAllMethod_1Order_shouldReturn200() {
-        deleteData();
-        int orderId = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int[] orderIds = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int orderId = orderIds[orderIds.length-1];
+
+
         when().get("/order/getAll")
                 .then().statusCode(200)
                 .body("", hasSize(1))
@@ -195,6 +214,162 @@ public class OrdersAppTest {
                 .body("customer_id", hasItem(3))
                 .body("orderDate", hasItem("2019-01-08"));
 
+    }
+
+    @Test
+    public void getAllMethod_2Orders_shouldReturn200(){
+
+        int[] orderIds1 = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int[] orderIds2 = addOrderAndGetId(ORDER_AND_ITEMS_3);
+        int orderId1 = orderIds1[orderIds1.length-1];
+        int orderId2 = orderIds2[orderIds2.length-1];
+
+        when().get("/order/getAll")
+                .then().statusCode(200)
+                .body("",hasSize(2))
+                .body("orderId", hasItems(orderId1, orderId2))
+                .body("customer_id", hasItems(3,2))
+                .body("orderDate", hasItems("2019-01-08", "2019-05-08"));
+    }
+
+    @Test
+    public void delMethod_ExistingOrderShouldReturn200(){
+        int[] orderIds = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int orderId = orderIds[orderIds.length-1];
+        with().param("order_id", orderId)
+                .when().delete("/order/del")
+                .then().statusCode(200)
+                .body( equalTo("Order has been deleted"));
+
+    }
+
+    @Test
+    public void delMethod_noOrderIdParameter_shouldReturnStatus400(){
+        when().delete("/order/del")
+                .then().statusCode(400)
+                .body(equalTo("Uncorrect request params"));
+    }
+
+    @Test
+    public void delMethod_wrongTypeOfOrderIdParameter_shouldReturnStatus400(){
+        with().param("order_id", "abdd")
+                .when().delete("/order/del")
+                .then().statusCode(400)
+                .body(equalTo("Uncorrect order_id format"));
+    }
+
+    @Test
+    public void delMethod_odrerIdDoesNotExist_shouldReturnStatus404(){
+        with().param("order_id", 8000)
+                .when().delete("/order/del")
+                .then().statusCode(404)
+                .body(equalTo("Order hasn't been found"));
+    }
+
+    @Test
+    public void changeMethod_existingOrder_shouldReturnStatus200(){
+        int[] orderIds1 = addOrderAndGetId(ORDER_AND_ITEMS_1);
+        int orderId1 = orderIds1[orderIds1.length-1];
+
+        String changeBody = "[{\n" +
+                "    \"orderId\":" +
+                orderId1 +
+                ",\n" +
+                "    \"customer_id\": 3,\n" +
+                "    \"orderDate\": \"2019-04-09\"\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\":" +
+                orderIds1[0] +
+                ",\n" +
+                "    \"book_id\": 1,\n" +
+                "    \"ammount\": 450\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\":" +
+                orderIds1[1] +
+                ",\n" +
+                "    \"book_id\": 2,\n" +
+                "    \"ammount\": 550\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\":" +
+                orderIds1[2] +
+                ",\n" +
+                "    \"book_id\": 3,\n" +
+                "    \"ammount\": 550\n" +
+                "  }\n" +
+                "]";
+
+        with().body(changeBody).
+        when().put("/order/change")
+                .then().statusCode(200)
+                .body(equalTo("Order has been changed"));
+
+    }
+
+    @Test
+    public void changeMethod_noExistingOrder_shouldReturnStatus404(){
+        int orderId1 = 9999999;
+        String changeBody = "[{\n" +
+                "    \"orderId\":" +
+                orderId1 +
+                ",\n" +
+                "    \"customer_id\": 3,\n" +
+                "    \"orderDate\": \"2019-04-09\"\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\": 1,\n" +
+                "    \"book_id\": 1,\n" +
+                "    \"ammount\": 450\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\": 2,\n" +
+                "    \"book_id\": 2,\n" +
+                "    \"ammount\": 550\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\": 3,\n" +
+                "    \"book_id\": 3,\n" +
+                "    \"ammount\": 550\n" +
+                "  }\n" +
+                "]";
+
+        with().body(changeBody)
+                .when().put("/order/change")
+                .then().statusCode(404)
+                .body(equalTo("Order or item hasn't been found"));
+    }
+
+    @Test
+    public void changeMethod_noOrderIdinBody_shouldReturnStatus500(){
+
+        String changeBody = "[{\n" +
+                "    \"orderId\":" +
+                ",\n" +
+                "    \"customer_id\": 3,\n" +
+                "    \"orderDate\": \"2019-04-09\"\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\": 1,\n" +
+                "    \"book_id\": 1,\n" +
+                "    \"ammount\": 450\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\": 2,\n" +
+                "    \"book_id\": 2,\n" +
+                "    \"ammount\": 550\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"item_id\": 3,\n" +
+                "    \"book_id\": 3,\n" +
+                "    \"ammount\": 550\n" +
+                "  }\n" +
+                "]";
+        with().body(changeBody)
+                .with().put("/order/change")
+                .then().statusCode(500)
+                .body(equalTo("Internal error. Order hasn't been changed"));
 
     }
 

@@ -11,7 +11,8 @@ import java.util.List;
 public class OrderStorageImpl implements OrderStorage {
 
     //private static List<Order> orderList = new ArrayList<>();
-    private int order_id = 0;
+    private int orderId = 0;
+    private List<Integer> items = new ArrayList<>();
 
     private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/book_store";
     private static final String JDBC_USER = "postgres";
@@ -83,22 +84,24 @@ public class OrderStorageImpl implements OrderStorage {
                     "VALUES (?, ?) RETURNING order_id;");
             preparedStatementOrderItem = connection.prepareStatement("INSERT INTO" +
                     " order_items (book_id, order_id, ammount) " +
-                    "VALUES (?,?,?)");
+                    "VALUES (?,?,?) RETURNING item_id");
 
             preparedStatementOrder.setDate(1, order.getOrderDate());
             preparedStatementOrder.setInt(2, order.getCustomer_id());
             ResultSet resultSet = preparedStatementOrder.executeQuery();
             resultSet.next();
-            order_id = resultSet.getInt(1);
+            orderId = resultSet.getInt(1);
 
             for (OrderItem orderItem : orderItems
             ) {
                 preparedStatementOrderItem.setInt(1, orderItem.getBook_id());
-                preparedStatementOrderItem.setInt(2, resultSet.getInt(1));
+                preparedStatementOrderItem.setInt(2, orderId);
                 preparedStatementOrderItem.setBigDecimal(3, orderItem.getAmmount());
-                preparedStatementOrderItem.execute();
+                ResultSet resultSet1 = preparedStatementOrderItem.executeQuery();
+                if(resultSet1.next()){
+                    items.add(resultSet1.getInt(1));
+                }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
@@ -107,13 +110,14 @@ public class OrderStorageImpl implements OrderStorage {
         }
     }
 
+
     @Override
     public boolean deleteOrder(int order_id) {
+        if(!isOrderId(order_id)) return false;
         Connection connection = getConnection();
         PreparedStatement preparedStatementDelete = null;
         String delOrderItem = " DELETE FROM order_items WHERE order_id = ?;";
         String delOrder = "DELETE FROM orders WHERE order_id = ?;";
-
         try {
             preparedStatementDelete = connection.prepareStatement(delOrderItem);
             preparedStatementDelete.setInt(1, order_id);
@@ -133,7 +137,10 @@ public class OrderStorageImpl implements OrderStorage {
     }
 
     @Override
-    public void changeOrderAndItems(Order order, List<OrderItem> orderItems) {
+    public boolean changeOrderAndItems(Order order, List<OrderItem> orderItems) {
+        System.out.println("isOrderId(order.getOrderId()) = " + isOrderId(order.getOrderId()));
+
+        if(!isOrderId(order.getOrderId())) return false;
         Connection connection = getConnection();
         PreparedStatement preparedStatement = null;
         try {
@@ -145,21 +152,74 @@ public class OrderStorageImpl implements OrderStorage {
 
             preparedStatement = connection.prepareStatement("UPDATE order_items SET book_id = ?, ammount=? WHERE item_id = ?");
 
+            for (OrderItem orderitem: orderItems
+                 ) {
+                System.out.println("orderitem = " + orderitem);
+            }
+
             for (OrderItem orderItem : orderItems
             ) {
-                preparedStatement.setInt(1, orderItem.getBook_id());
-                preparedStatement.setBigDecimal(2, orderItem.getAmmount());
-                preparedStatement.setInt(3, orderItem.getItem_id());
-                preparedStatement.execute();
+                System.out.println("is item and order " +isItemIdAndOrderId(orderItem.getItem_id(), orderItem.getOrder_id()));
+                if (isItemIdAndOrderId(orderItem.getItem_id(), orderItem.getOrder_id())){
+                    preparedStatement.setInt(1, orderItem.getBook_id());
+                    preparedStatement.setBigDecimal(2, orderItem.getAmmount());
+                    preparedStatement.setInt(3, orderItem.getItem_id());
+                    preparedStatement.execute();
+                }else {
+                    return false;
+                }
+
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         } finally {
             closeDataBaseConnection(connection, preparedStatement);
         }
+        return true;
     }
 
-    ;
+    private boolean isOrderId(int order_id) {
+        Connection connection = getConnection();
+        PreparedStatement preparedStatement = null;
+        int orderIdFromDB = 0;
+        try {
+            preparedStatement = connection.prepareStatement("SELECT order_id FROM orders WHERE order_id = ?");
+            preparedStatement.setInt(1, order_id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if(resultSet.next()){
+                orderIdFromDB = resultSet.getInt(1);
+            }
+        } catch (SQLException sql) {
+            sql.printStackTrace();
+        } finally {
+            closeDataBaseConnection(connection, preparedStatement);
+        }
+        return orderIdFromDB > 0;
+    }
+
+    private boolean isItemIdAndOrderId(int itemId, int order_id){
+        Connection connection = getConnection();
+        PreparedStatement preparedStatement = null;
+        int itemIdFromDB = 0;
+        try {
+            preparedStatement = connection.prepareStatement("select item_id from order_items where item_id = ? and order_id = ?;");
+            preparedStatement.setInt(1, itemId);
+            preparedStatement.setInt(2, order_id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()){
+                itemIdFromDB = resultSet.getInt(1);
+            }
+        }catch (SQLException sqe){
+            sqe.printStackTrace();
+            return false;
+        } finally {
+            closeDataBaseConnection(connection, preparedStatement);
+        }
+        return itemIdFromDB>0;
+    }
 
     private void closeDataBaseConnection(Connection connection, PreparedStatement preparedStatement) {
         try {
@@ -179,11 +239,20 @@ public class OrderStorageImpl implements OrderStorage {
         }
     }
 
-    public int getOrder_id() {
-        return order_id;
+    public int getOrderId() {
+        return orderId;
     }
 
-    public  void clearTablesOrderOrderItem() {
+    public List<Integer> getItems() {
+        return items;
+    }
+
+    @Override
+    public String toString() {
+        return "[" + items +"]";
+    }
+
+    public void clearTablesOrderOrderItem() {
         Connection connection = getConnection();
         PreparedStatement preparedStatement = null;
         try {

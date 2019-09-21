@@ -1,12 +1,10 @@
 package com.example.orders.controller;
 
-import com.example.orders.storage.OrderStorage;
 import com.example.orders.storage.impl.OrderStorageImpl;
 import com.example.orders.type.Order;
 import com.example.orders.type.OrderItem;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -65,7 +63,6 @@ public class OrderController {
         String response = "";
         try {
             response = objectMapper.writeValueAsString(orderStorage.getAllOrders());
-            System.out.println("response = " + response);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error can't read all orders");
@@ -75,6 +72,7 @@ public class OrderController {
 
     public Response serveChangeOrderRequest(IHTTPSession session){
         ObjectMapper objectMapper = new ObjectMapper();
+        boolean isOrderIdAndItemId = false;
         int contentLength = Integer.parseInt(session.getHeaders().get("content-length"));
         byte[] buffer = new byte[contentLength];
         Order order = new Order();
@@ -87,17 +85,20 @@ public class OrderController {
 
             for (int i = 1; i <jsonNodeTree.size() ; i++) {
                 OrderItem orderItem = objectMapper.readValue(jsonNodeTree.get(i).toString(),OrderItem.class);
+                orderItem.setOrder_id(order.getOrderId());
                 orderItems.add(orderItem);
             }
-            orderStorage.changeOrderAndItems(order,orderItems);
-
+            isOrderIdAndItemId = orderStorage.changeOrderAndItems(order,orderItems);
+            if (isOrderIdAndItemId){
+                return newFixedLengthResponse(OK, "text/plain", "Order has been changed");
+            } else {
+                return newFixedLengthResponse(NOT_FOUND, "text/plain", "Order or item hasn't been found");
+            }
         } catch (IOException e) {
             e.printStackTrace();
             return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been changed");
-
         }
-
-        return newFixedLengthResponse(OK, "text/plain", "Order has been changed");
+        //return newFixedLengthResponse(OK, "text/plain", "Order has been changed");
     }
 
     public Response serveAddOrderRequest(IHTTPSession session){
@@ -116,7 +117,6 @@ public class OrderController {
             String requestBody = new String(buffer);
             //create order
               JsonNode jsonNodeRoot = objectMapper.readTree(requestBody);
-
               order = objectMapper.readValue(jsonNodeRoot.get(0).toString(), Order.class);
               //alternative
               //order.setCustomer_id(jsonOrder.get("customer_id").asInt());
@@ -134,21 +134,31 @@ public class OrderController {
             return newFixedLengthResponse(INTERNAL_ERROR, "text/plain", "Internal error. Order hasn't been added");
         }
 
-        //TODO: obsluzyc sytuacje, w ktorych dostajemy dane, ktorych nie ma w bazie danych (metody statyczne)
         orderStorage.addOrderAndItems(order, orderItems);
 
-        return newFixedLengthResponse(OK, "text/plain", "Order has been added =" + orderStorage.getOrder_id());
+
+        return newFixedLengthResponse(OK, "text/plain", "Order has been added ="
+                + orderStorage.getOrderId() + " items: " + orderStorage.getItems().toString());
     }
 
     public Response serveDelOrderRequest(IHTTPSession session){
 
         Map<String, List<String>> parameters = session.getParameters();
+        boolean isOrderId = false;
         if(parameters.containsKey(ORDER_ID_PARAM_NAME)){
             String orderIdStr = parameters.get(ORDER_ID_PARAM_NAME).get(0);
-            System.out.println("Integer.parseInt(orderIdStr) = " + Integer.parseInt(orderIdStr));
-            orderStorage.deleteOrder(Integer.parseInt(orderIdStr));
-            return newFixedLengthResponse(OK, "text/plain", "Order has been deleted");
-        };
+            try{
+                isOrderId = orderStorage.deleteOrder(Integer.parseInt(orderIdStr));
+            } catch (NumberFormatException nfe){
+                nfe.printStackTrace();
+                return newFixedLengthResponse(BAD_REQUEST, "text/plain", "Uncorrect order_id format");
+            }
+            if(isOrderId){
+                return newFixedLengthResponse(OK, "text/plain", "Order has been deleted");
+            } else{
+                return newFixedLengthResponse(NOT_FOUND, "text/plain", "Order hasn't been found");
+            }
+        }
         return newFixedLengthResponse(BAD_REQUEST, "text/plain", "Uncorrect request params");
     }
 

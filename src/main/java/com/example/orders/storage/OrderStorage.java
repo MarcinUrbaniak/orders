@@ -15,7 +15,7 @@ public interface OrderStorage {
 
     boolean deleteOrder(int order_id);
 
-    void changeOrderAndItems(Order order, List<OrderItem> orderItems);
+    boolean changeOrderAndItems(Order order, List<OrderItem> orderItems);
 
 
 
